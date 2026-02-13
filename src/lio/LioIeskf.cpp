@@ -1,4 +1,4 @@
-#include "eskf/LioIeskf.h"
+#include "lio/LioIeskf.h"
 
 #include <glog/logging.h>
 #include <pcl/filters/voxel_grid.h>
@@ -16,6 +16,19 @@ bool LioIeskf::config(const std::string &yaml_file) {
 
   imu_initializer_.config(yaml_file);
 
+  LOG(INFO) << "Loading config file " << yaml_file;
+
+  auto yaml = YAML::LoadFile(yaml_file);
+  std::vector<double> ext_t =
+      yaml["mapping"]["extrinsic_T"].as<std::vector<double>>();
+  std::vector<double> ext_r =
+      yaml["mapping"]["extrinsic_R"].as<std::vector<double>>();
+  params_.viewer_on = yaml["viewer_on"].as<bool>();
+
+  const Eigen::Vector3d lidar_T_wrt_IMU = VecFromArray(ext_t);
+  const Eigen::Matrix3d lidar_R_wrt_IMU = MatFromArray(ext_r);
+  T_IL_ = Sophus::SE3d(lidar_R_wrt_IMU, lidar_T_wrt_IMU);
+
   if (params_.viewer_on) {
     viewer_ = std::make_unique<MapViewer>("IESKF LIO", 0.5);
   }
@@ -28,16 +41,6 @@ bool LioIeskf::config(const std::string &yaml_file) {
   ndt_params.chi2_th = 5.0;
   ndt_params.guess_translation = false;
   ndt_inc_.set_params(ndt_params);
-
-  auto yaml = YAML::LoadFile(yaml_file);
-  std::vector<double> ext_t =
-      yaml["mapping"]["extrinsic_T"].as<std::vector<double>>();
-  std::vector<double> ext_r =
-      yaml["mapping"]["extrinsic_R"].as<std::vector<double>>();
-
-  const Eigen::Vector3d lidar_T_wrt_IMU = VecFromArray(ext_t);
-  const Eigen::Matrix3d lidar_R_wrt_IMU = MatFromArray(ext_r);
-  T_IL_ = Sophus::SE3d(lidar_R_wrt_IMU, lidar_T_wrt_IMU);
 
   return true;
 }
@@ -158,6 +161,7 @@ LioIeskf::desampling(const double leaf_sz) {
                 });
   pcl_cloud->height = 1;
   pcl_cloud->width = pcl_cloud->size();
+  last_scan_ = pcl_cloud;
 
   pcl::VoxelGrid<pcl::PointXYZI> vg;
   vg.setLeafSize(leaf_sz, leaf_sz, leaf_sz);
@@ -176,6 +180,8 @@ void LioIeskf::correct() {
   if (!ndt_initialized) {
     ndt_inc_.add_scan(pcl_cloud);
     last_kf_pose_ = Sophus::SE3d();
+    kf_num_++;
+    last_timestamp_ = ieskf_.state().timestamp;
 
     if (viewer_) {
       viewer_->add_pointcloud(pcl_cloud, Sophus::SE3d());
@@ -184,28 +190,30 @@ void LioIeskf::correct() {
     return;
   }
 
-  LOG(INFO) << "before correction: "
-            << ieskf_.state_SE3().translation().transpose();
+  // LOG(INFO) << "before correction: "
+  // << ieskf_.state_SE3().translation().transpose();
   ndt_inc_.set_source(pcl_cloud);
   ieskf_.correct_pose(
       [this](const Sophus::SE3d &pose, IESKF::Mat18 &H, IESKF::Vec18 &b) {
         ndt_inc_.compute_Hb(pose, H, b);
       });
   const Sophus::SE3d cur_pose = ieskf_.state_SE3();
-  LOG(INFO) << "after correction: " << cur_pose.translation().transpose();
+  // LOG(INFO) << "after correction: " << cur_pose.translation().transpose();
 
   if (is_keyframe(cur_pose)) {
     auto cloud_W = std::make_shared<pcl::PointCloud<pcl::PointXYZI>>();
     pcl::transformPointCloud(*pcl_cloud, *cloud_W,
                              cur_pose.matrix().cast<float>());
-    LOG(INFO) << "Creating new KeyFrame at "
-              << cur_pose.translation().transpose();
+    // LOG(INFO) << "Creating new KeyFrame at "
+    //           << cur_pose.translation().transpose();
     ndt_inc_.add_scan(cloud_W);
 
     if (viewer_) {
       viewer_->add_pointcloud(cloud_W, cur_pose);
     }
     last_kf_pose_ = cur_pose;
+    kf_num_++;
+    last_timestamp_ = ieskf_.state().timestamp;
   }
 }
 

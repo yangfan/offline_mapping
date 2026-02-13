@@ -48,6 +48,26 @@ BagIO &BagIO::AddIMUHandle(const std::string &topic_name, IMUHandle func) {
       });
 }
 
+BagIO &BagIO::AddGNSSHandle(const std::string &topic_name, GNSSHandle func) {
+  return AddHandle(
+      topic_name,
+      [&topic_name,
+       &func](rosbag2_storage::SerializedBagMessageConstSharedPtr msg) -> bool {
+        if (msg->topic_name != topic_name) {
+          return false;
+        }
+        rclcpp::SerializedMessage serialized_msg(*msg->serialized_data);
+        sensor_msgs::msg::NavSatFix::UniquePtr gnss_msg =
+            std::make_unique<sensor_msgs::msg::NavSatFix>();
+        rclcpp::Serialization<sensor_msgs::msg::NavSatFix> serializer;
+        serializer.deserialize_message(&serialized_msg, gnss_msg.get());
+        if (!gnss_msg || std::isnan(gnss_msg->altitude)) {
+          return false;
+        }
+        return func(std::move(gnss_msg));
+      });
+}
+
 void BagIO::Process() {
   rosbag2_storage::StorageOptions options;
   options.uri = bag_file_;

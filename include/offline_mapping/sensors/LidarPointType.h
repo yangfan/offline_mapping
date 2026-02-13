@@ -18,7 +18,6 @@ using LidarPointCloudPtr = pcl::PointCloud<LidarPointType>::Ptr;
 namespace velodyne_ros {
 struct EIGEN_ALIGN16 Point {
   PCL_ADD_POINT4D;
-  float intensity;
   float time;
   std::uint16_t ring;
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
@@ -27,5 +26,9 @@ struct EIGEN_ALIGN16 Point {
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
     velodyne_ros::Point,
-    (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
-        float, time, time)(std::uint16_t, ring, ring))
+    (float, x, x)(float, y, y)(float, z, z)(float, time, time)(std::uint16_t,
+                                                               ring, ring))
+
+using PointType = pcl::PointXYZI;
+using PointCloudType = pcl::PointCloud<PointType>;
+using PointCloudPtr = pcl::PointCloud<PointType>::Ptr;

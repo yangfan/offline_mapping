@@ -267,8 +267,8 @@ bool NDT_INC::compute_Hb(const Sophus::SE3d &Tts, Mat18 &H, Vec18 &b) {
     LOG(WARNING) << "Empty source point cloud or grid.";
     return false;
   }
-  LOG(INFO) << "source sz: " << source_->size()
-            << ", grid sz: " << grid_.size();
+  // LOG(INFO) << "source sz: " << source_->size()
+  //           << ", grid sz: " << grid_.size();
   if (neighbors_.empty()) {
     set_neighbors(params_.nb_type);
   }
@@ -343,8 +343,8 @@ bool NDT_INC::compute_Hb(const Sophus::SE3d &Tts, Mat18 &H, Vec18 &b) {
     return false;
   }
   const double avg_chi2 = cur_chi2 / valid_cnt;
-  LOG(INFO) << "cur_chi2: " << cur_chi2 << ", valid_cnt: " << valid_cnt
-            << ", avg_chi2: " << avg_chi2;
+  // LOG(INFO) << "cur_chi2: " << cur_chi2 << ", valid_cnt: " << valid_cnt
+  //           << ", avg_chi2: " << avg_chi2;
 
   return true;
 }

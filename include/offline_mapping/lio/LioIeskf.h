@@ -18,11 +18,20 @@ public:
     double min_kf_deg = 10.0;
     bool viewer_on = true;
   };
+  LioIeskf() = default;
+  explicit LioIeskf(const std::string &config_file) { config(config_file); }
   bool config(const std::string &yaml_file);
   void add_imu(std::unique_ptr<sensor_msgs::msg::Imu> imu_msg);
   void add_scan(std::unique_ptr<sensor_msgs::msg::PointCloud2> scan_msg);
 
   void save_map(const std::string &map_file);
+
+  long unsigned int keyframe_num() const { return kf_num_; }
+  Sophus::SE3d keyframe_pose() const { return last_kf_pose_; }
+  pcl::PointCloud<pcl::PointXYZI>::Ptr keyframe_scan() const {
+    return last_scan_;
+  }
+  double keyframe_timestamp() const { return last_timestamp_; }
 
 private:
   ImuInitializer imu_initializer_;
@@ -38,7 +47,11 @@ private:
   double deg2rad = M_PI / 180.0;
 
   Sophus::SE3d T_IL_;
+
+  long unsigned int kf_num_ = 0;
   Sophus::SE3d last_kf_pose_;
+  pcl::PointCloud<pcl::PointXYZI>::Ptr last_scan_;
+  double last_timestamp_ = 0.0;
 
   void process_sync_data(const Sync::DataGroup &lidar_imu);
 

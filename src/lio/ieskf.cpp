@@ -1,4 +1,4 @@
-#include "eskf/ieskf.h"
+#include "lio/ieskf.h"
 #include <glog/logging.h>
 
 bool IESKF::update_time(const double time) {
@@ -139,7 +139,7 @@ bool IESKF::correct_pose(IESKF::NDT_callback compute_Hb) {
 
     correct_state();
 
-    LOG(INFO) << "It " << i << " err state norm: " << err_state.norm();
+    // LOG(INFO) << "It " << i << " err state norm: " << err_state.norm();
 
     if (err_state.norm() < params_.eps) {
       break;

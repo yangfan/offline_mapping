@@ -4,6 +4,7 @@
 #include <rclcpp/serialization.hpp>
 #include <rosbag2_transport/reader_writer_factory.hpp>
 #include <sensor_msgs/msg/imu.hpp>
+#include <sensor_msgs/msg/nav_sat_fix.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
 #include <functional>
@@ -17,6 +18,8 @@ public:
   using PointCloud2Handle =
       std::function<bool(std::unique_ptr<sensor_msgs::msg::PointCloud2>)>;
   using IMUHandle = std::function<bool(std::unique_ptr<sensor_msgs::msg::Imu>)>;
+  using GNSSHandle =
+      std::function<bool(std::unique_ptr<sensor_msgs::msg::NavSatFix>)>;
 
   explicit BagIO(const std::string &file) : bag_file_(file){};
 
@@ -24,6 +27,9 @@ public:
   BagIO &AddPointCloudHandle(const std::string &topic_name,
                              PointCloud2Handle func);
   BagIO &AddIMUHandle(const std::string &topic_name, IMUHandle func);
+  BagIO &AddGNSSHandle(const std::string &topic_name, GNSSHandle func);
+
+  void clearHandles() { process_funcs_.clear(); }
 
   void Process();
 
