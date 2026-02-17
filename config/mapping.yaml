@@ -12,3 +12,11 @@ common:
   lid_topic: points_raw
   imu_topic: imu_raw
   gnss_topic: gps_rtk_fix
+gnss_ext:
+  t: [0, 0.24, -0.283]
+gnss_outlier_th: 1.0
+gnss_pos_noise: 2.0
+gnss_height_noise_ratio: 10.0
+gnss_ang_noise: 5.0
+lidar_continuous_num: 5
+max_iterations: 100

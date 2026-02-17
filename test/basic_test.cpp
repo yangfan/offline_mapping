@@ -23,6 +23,7 @@ DEFINE_string(
     data_path,
     "/home/fan/ssd/Projects/ros2_ws/src/offline_mapping/data/output/keyframes/",
     "Path to save map file");
+DEFINE_string(info_file, "kf_info.txt", "keyframe info file");
 
 // TEST(BASIC, IO) {
 //   BagIO bag_io(FLAGS_bag_file);
@@ -62,7 +63,9 @@ DEFINE_string(
 // }
 
 TEST(BACIS, Map) {
-  mapping::merge_keyframes(FLAGS_data_path, 0.1, mapping::POSE_TYPE::lio);
+  mapping::merge_keyframes(FLAGS_data_path + "pcd/",
+                           FLAGS_data_path + FLAGS_info_file, 0.1,
+                           mapping::POSE_TYPE::lio);
 }
 
 int main(int argc, char **argv) {

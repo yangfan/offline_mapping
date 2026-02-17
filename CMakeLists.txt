@@ -27,6 +27,13 @@ find_package(glog REQUIRED)
 find_package(gflags REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
+# set path to find g2o if it was not installed to the default root directory
+set(G2O_ROOT "/home/fan/ssd/study/slambook2/3rdparty/g2o/install")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package(G2O REQUIRED)
+message(STATUS "include: ${G2O_INCLUDE_DIR}")
+message(STATUS "core: ${G2O_CORE_LIBRARY}")
+
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
 

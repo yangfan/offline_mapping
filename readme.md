@@ -8,7 +8,7 @@
 
 ### Front End
 
-Goal: Use IESKF Lidar IMU Odometry to create Keyframes with timestamp lio pose, gnss pose, pointcloud etc.
+Goal: Use IESKF Lidar IMU Odometry to create Keyframes with timestamp lio pose, scan, gnss pose (not used in lio), etc.
 
 #### Procedure
 
@@ -45,13 +45,15 @@ Goal: Refine keyframe pose by pose graph optimization
 
 #### Procedure
 
-1.  ICP between gnss and lio trajectory
-2.  Pose graph optimization (g2o)
-    - vertices: keyframes
-    - edges: gnss position, relative motion between two keyframes based on lio, loop closure constraint between two keyframes that are physcially close.
-
-3.  Remove outliers (disable outlier edges), i.e., chi2 > robust kernel delta, optimization again.
-4.  save results: asign optimization poses to keyframes, save keyframes info to txt
+1.  ICP alignment between gnss and lio trajectory
+2.  Build Pose graph
+    - create optimizer
+    - create vertices: keyframes
+    - create edges: gnss position, relative motion between two keyframes based on lio, loop closure constraint between two keyframes that are physcially close.
+3.  Solve optimization
+4.  Remove outliers (disable outlier edges), i.e., chi2 > robust kernel delta, optimization again.
+5.  Solve optimization again
+6.  save results: asign optimization poses to keyframes, save keyframes info to txt
 
 ### Map splitting
 
@@ -98,3 +100,18 @@ Goal: load and unload submaps based on current position
 2. Compute submap id from current position, and load it if it hasn't been loaded yet.
 3. Unload map that are far away from current position (determined by submap id)
 4. Reset NDT target if map has been modified (load or unload).
+
+### Commands
+
+#### Frontend
+
+1. create keyframes scan (pcd files) and keyframes info (txt file): `./bin/main_frontend`
+2. (optional) merge all keyframe scan based on lio pose: `./bin/merge_kfs --info_file=kf_info.txt --pose_type=lio`
+3. (optional) visualize keyframes scan: `pcl_viewer ./data/output/keyframes/pcd/map.pcd`
+
+#### Optimization stage 1
+
+1. optimize stage 1 with gnss edges and lio edges: `./bin/main_opt --opt_stage=1`
+2. (optional) visualize trajectory of lio pose and optimized pose: `python3 trajectory.py  ./data/output/keyframes/kf_info_opt1.txt`
+3. (optional) merge all keyframe scan based on lio pose: `./bin/merge_kfs --info_file=kf_info_opt1.txt --pose_type=opt1`
+4. (optional) visualize keyframes scan: `pcl_viewer ./data/output/keyframes/pcd/map.pcd`

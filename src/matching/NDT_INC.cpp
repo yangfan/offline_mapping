@@ -318,7 +318,7 @@ bool NDT_INC::compute_Hb(const Sophus::SE3d &Tts, Mat18 &H, Vec18 &b) {
         }
       });
 
-  double cur_chi2 = 0.0;
+  // double cur_chi2 = 0.0;
   int valid_cnt = 0;
 
   H.setZero();
@@ -335,14 +335,14 @@ bool NDT_INC::compute_Hb(const Sophus::SE3d &Tts, Mat18 &H, Vec18 &b) {
       b += -J_j.transpose() * info * es[eid];
 
       valid_cnt++;
-      cur_chi2 += es[eid].transpose() * vptrs[eid]->info * es[eid];
+      // cur_chi2 += es[eid].transpose() * vptrs[eid]->info * es[eid];
     }
   }
 
   if (valid_cnt < params_.min_valid) {
     return false;
   }
-  const double avg_chi2 = cur_chi2 / valid_cnt;
+  // const double avg_chi2 = cur_chi2 / valid_cnt;
   // LOG(INFO) << "cur_chi2: " << cur_chi2 << ", valid_cnt: " << valid_cnt
   //           << ", avg_chi2: " << avg_chi2;
 

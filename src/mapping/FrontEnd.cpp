@@ -4,6 +4,8 @@
 #include <glog/logging.h>
 #include <yaml-cpp/yaml.h>
 
+#include <filesystem>
+
 bool FrontEnd::config() {
 
   try {
@@ -20,6 +22,18 @@ bool FrontEnd::config() {
   } catch (...) {
     LOG(ERROR) << "Unable to read config file.";
     return false;
+  }
+
+  const std::string scan_path = kf_path_ + "pcd/";
+  try {
+    if (!std::filesystem::exists(kf_path_)) {
+      std::filesystem::create_directories(kf_path_);
+    }
+    if (!std::filesystem::exists(scan_path)) {
+      std::filesystem::create_directories(scan_path);
+    }
+  } catch (const std::filesystem::filesystem_error &e) {
+    LOG(ERROR) << "Unable to create directory" << e.what();
   }
 
   return true;
@@ -79,6 +93,7 @@ void FrontEnd::run() {
       .Process();
 
   align_kf_gnss();
+  LOG(INFO) << "Saving keyframe info at" << kf_path_ + "kf_info.txt";
   mapping::save_keyframes(kf_path_ + "kf_info.txt", keyframes_);
 }
 

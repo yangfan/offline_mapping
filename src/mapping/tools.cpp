@@ -11,17 +11,17 @@
 
 namespace mapping {
 
-void merge_keyframes(const std::string &kf_path, const double filter_sz,
-                     const POSE_TYPE pose_type) {
+void merge_keyframes(const std::string &kf_path, const std::string &info_path,
+                     const double filter_sz, const POSE_TYPE pose_type) {
   std::vector<std::unique_ptr<KeyFrame>> kfs;
-  load_keyframes(kf_path + "kf_info.txt", kfs);
+  load_keyframes(info_path, kfs);
 
   pcl::VoxelGrid<PointType> grid_filter;
   grid_filter.setLeafSize(filter_sz, filter_sz, filter_sz);
 
   PointCloudPtr map(new PointCloudType);
   for (const auto &kf : kfs) {
-    kf->load_scan(kf_path + "pcd/" + std::to_string(kf->id) + ".pcd");
+    kf->load_scan(kf_path + std::to_string(kf->id) + ".pcd");
     if (kf->scan->empty()) {
       LOG(WARNING) << "Empty scan in Keyframe " << kf->id;
     }
@@ -70,6 +70,7 @@ bool save_keyframes(const std::string &kf_path,
 
 bool load_keyframes(const std::string &kf_path,
                     std::vector<std::unique_ptr<KeyFrame>> &kfs) {
+  LOG(INFO) << "loading kfs at " << kf_path;
   std::ifstream ifs(kf_path);
   if (!ifs.is_open()) {
     return false;

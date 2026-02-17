@@ -10,7 +10,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(basic_test basic_test.cpp)
-target_link_libraries(basic_test frontend sensors gtest glog::glog ${GFLAGS_LIBRARIES})
+target_link_libraries(basic_test mapping sensors gtest glog::glog ${GFLAGS_LIBRARIES})
 target_include_directories(basic_test PUBLIC ${CMAKE_SOURCE_DIR}/include/offline_mapping)
 
 include(GoogleTest)
