@@ -109,8 +109,8 @@ bool NDT::build_grid() {
   //       ++it;
   //     }
   //   }
-  LOG(INFO) << "number of voxels in grid: " << grid_.size();
-  LOG(INFO) << "total number of pt: " << point_num();
+  // LOG(INFO) << "number of voxels in grid: " << grid_.size();
+  // LOG(INFO) << "total number of pt: " << point_num();
 
   return true;
 }
@@ -280,13 +280,14 @@ bool NDT::align(Sophus::SE3d &Tts) {
                     }
                   });
     if (valid_cnt < params_.min_valid) {
+      // LOG(INFO) << "not enough valid pt: " << valid_cnt;
       return false;
     }
     const double avg_chi2 = cur_chi2 / valid_cnt;
-    LOG(INFO) << "It " << i << " cur_chi2: " << cur_chi2
-              << ", valid_cnt: " << valid_cnt << ", avg_chi2: " << avg_chi2;
+    // LOG(INFO) << "It " << i << " cur_chi2: " << cur_chi2
+    //           << ", valid_cnt: " << valid_cnt << ", avg_chi2: " << avg_chi2;
     if (avg_chi2 > 1.2 * last_chi2) {
-      LOG(INFO) << "Stop optimizing.";
+      // LOG(INFO) << "Stop optimizing.";
       break;
     }
     last_chi2 = avg_chi2;
@@ -301,7 +302,7 @@ bool NDT::align(Sophus::SE3d &Tts) {
     }
     Vec6 delta = H.ldlt().solve(b);
     if (std::isnan(delta[0]) || delta.norm() < params_.eps) {
-      LOG(INFO) << "coverged, delta: " << delta.transpose();
+      // LOG(INFO) << "coverged, delta: " << delta.transpose();
       break;
     }
     pose.so3() = pose.so3() * Sophus::SO3d::exp(delta.head<3>());

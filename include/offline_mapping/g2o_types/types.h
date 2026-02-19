@@ -30,8 +30,11 @@ public:
 class EdgeGNSSPos : public g2o::BaseUnaryEdge<3, Eigen::Vector3d, VertexSE3> {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  EdgeGNSSPos(const Sophus::SE3d &T) : T_B_G_(T) {}
   virtual bool read(std::istream &is) override;
   virtual bool write(std::ostream &os) const override;
   virtual void computeError() override;
   //   virtual void linearizeOplus() override;
+private:
+  Sophus::SE3d T_B_G_;
 };

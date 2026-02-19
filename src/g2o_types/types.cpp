@@ -133,7 +133,7 @@ bool EdgeGNSSPos::write(std::ostream &os) const {
 }
 void EdgeGNSSPos::computeError() {
   auto vertex = static_cast<VertexSE3 *>(_vertices[0]);
-  _error = vertex->estimate().translation() - measurement();
+  _error = (vertex->estimate() * T_B_G_).translation() - measurement();
 }
 
 namespace g2o {
@@ -142,6 +142,6 @@ G2O_REGISTER_TYPE_GROUP(mapping3d)
 // names below are registered already for g2o viewer
 G2O_REGISTER_TYPE_NAME("VERTEX_SE3:QUAT", VertexSE3);
 G2O_REGISTER_TYPE_NAME("EDGE_SE3:QUAT", EdgeRelSE3);
-G2O_REGISTER_TYPE_NAME("EDGE_SE3_XYZ_PRIOR", EdgeGNSSPos);
+// G2O_REGISTER_TYPE_NAME("EDGE_SE3_XYZ_PRIOR", EdgeGNSSPos);
 
 } // namespace g2o

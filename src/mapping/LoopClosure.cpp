@@ -1,5 +1,4 @@
 #include "mapping/LoopClosure.h"
-// #include "mapping/ndt.h"
 #include "mapping/tools.h"
 
 #include <glog/logging.h>
@@ -77,6 +76,7 @@ bool LoopClosure::detect_candidates() {
         continue;
       }
       if ((kf_i->pose_opt1.translation() - kf_j->pose_opt1.translation())
+              .head<2>()
               .norm() < params_.loop_dist_) {
         candidates_.emplace_back(kf_i->id, kf_j->id,
                                  kf_i->pose_opt1.inverse() * kf_j->pose_opt1);

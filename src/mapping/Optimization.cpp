@@ -78,9 +78,9 @@ void Optimization::icp_align() {
   lpts.reserve(keyframes_.size());
 
   for (const auto &kf : keyframes_) {
-    if (kf->valid_gnss) {
+    if (kf->valid_gnss && std::abs(kf->pos_gnss.z()) < 20.0) {
       gpts.emplace_back(kf->pos_gnss);
-      lpts.emplace_back((kf->pose_lio * T_B_G_).translation());
+      lpts.emplace_back((kf->pose_lio).translation());
     }
   }
   const Eigen::Vector3d mean_gnss =
@@ -142,9 +142,9 @@ void Optimization::build_vertices() {
     auto vertex = new VertexSE3();
     vertex->setId(kf->id);
     if (params_.opt_stage == 1) {
-      vertex->setEstimate(kf->pose_lio * T_B_G_); // T_W_B * T_B_G = T_W_G
+      vertex->setEstimate(kf->pose_lio);
     } else if (params_.opt_stage == 2) {
-      vertex->setEstimate(kf->pose_opt1 * T_B_G_); // T_W_B * T_B_G = T_W_G
+      vertex->setEstimate(kf->pose_opt1);
     }
     vertices_.emplace_back(vertex);
     optimizer_.addVertex(vertex);
@@ -175,8 +175,8 @@ void Optimization::build_lio_edges() {
       edge->setId(edges_lio_.size());
       edge->setVertex(0, vertex_i);
       edge->setVertex(1, vertex_j);
-      edge->setMeasurement((vertex_i->estimate() * T_B_G_).inverse() *
-                           (vertex_j->estimate() * T_B_G_));
+      edge->setMeasurement(vertex_i->estimate().inverse() *
+                           vertex_j->estimate());
       edge->setInformation(info);
       edges_lio_.emplace_back(edge);
       optimizer_.addEdge(edge);
@@ -199,7 +199,7 @@ void Optimization::build_gnss_edges() {
   edges_gnss_.reserve(keyframes_.size());
   for (const auto &kf : keyframes_) {
     if (kf->valid_gnss) {
-      auto edge = new EdgeGNSSPos();
+      auto edge = new EdgeGNSSPos(T_B_G_);
       edge->setId(edges_lio_.size() + edges_gnss_.size());
       edge->setVertex(0, vertices_[kf->id]);
       edge->setMeasurement(kf->pos_gnss);
@@ -237,8 +237,7 @@ void Optimization::build_loop_edges() {
     edge->setVertex(0, v0);
     edge->setVertex(1, v1);
     edge->setId(eid++);
-    // T_Gi_Gj = T_G_B * T_Bi_Bj * T_B_G
-    edge->setMeasurement(T_B_G_.inverse() * candidate.Tij * T_B_G_);
+    edge->setMeasurement(candidate.Tij);
     edge->setInformation(info);
     auto rk = new g2o::RobustKernelCauchy();
     rk->setDelta(params_.loop_outlier_th);
@@ -319,9 +318,9 @@ void Optimization::update_kfs() {
   for (auto &kf : keyframes_) {
     // T_W_G * T_G_B = T_W_B
     if (params_.opt_stage == 1) {
-      kf->pose_opt1 = vertices_[kf->id]->estimate() * T_B_G_.inverse();
+      kf->pose_opt1 = vertices_[kf->id]->estimate();
     } else {
-      kf->pose_opt2 = vertices_[kf->id]->estimate() * T_B_G_.inverse();
+      kf->pose_opt2 = vertices_[kf->id]->estimate();
     }
   }
 }
