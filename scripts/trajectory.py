@@ -11,6 +11,8 @@ def draw_traj(kf_info):
     ax.plot(kfs[:, 7], kfs[:, 8], kfs[:, 9], 'r-', linewidth=1, label="LIO")
     ax.plot(kfs[:, 10], kfs[:, 11], kfs[:, 12], 'b-', linewidth=1, label="GNSS")
     ax.plot(kfs[:, 17], kfs[:, 18], kfs[:, 19], 'g-', linewidth=1, label="OPT1")
+    ax.plot(kfs[:, 24], kfs[:, 25], kfs[:, 26], 'y-', linewidth=1, label="OPT2")
+    ax.set_zlim([-10, 100])
     ax.set_aspect("equalxy")
     ax.set_title("Keyframe 3D position")
     ax.grid(True)
@@ -21,11 +23,12 @@ def draw_traj(kf_info):
     lio = ax.scatter(kfs[:, 7], kfs[:, 8], s=1, c='r')
     gnss = ax.scatter(kfs[:, 10], kfs[:, 11], s=1, c='b')
     opt1 = ax.scatter(kfs[:, 17], kfs[:, 18], s=1, c='g')
+    opt2 = ax.scatter(kfs[:, 24], kfs[:, 25], s=1, c='y')
     ax.set_xlabel("x")
     ax.set_ylabel("y")
     ax.set_title("Keyframe 2D position")
     ax.set_aspect("equal")
-    ax.legend([lio, gnss, opt1], ["LIO", "GNSS", "OPT1"])
+    ax.legend([lio, gnss, opt1, opt2], ["LIO", "GNSS", "OPT1", "OPT2"])
 
     plt.show()
 

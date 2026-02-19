@@ -30,8 +30,8 @@ Goal: find keyframes that are spatially close but created at different times
 
 1. Find Candidate
    1. go through all keyframe pairs
-   2. skip keyframes that were temperally close
-   3. skip keyframes that are temerally close to previous detect loop keyframe pairs
+   2. skip keyframes that were temporally close
+   3. skip keyframes that are temporally close to previous detect loop keyframe pairs
    4. candidate detected if the distance is small enough
    5. matching candidates: scan (query keyframe) to map (submap of target keyframe)
    - build submap of keyframes temporally close to target keframe
@@ -108,10 +108,27 @@ Goal: load and unload submaps based on current position
 1. create keyframes scan (pcd files) and keyframes info (txt file): `./bin/main_frontend`
 2. (optional) merge all keyframe scan based on lio pose: `./bin/merge_kfs --info_file=kf_info.txt --pose_type=lio`
 3. (optional) visualize keyframes scan: `pcl_viewer ./data/output/keyframes/pcd/map.pcd`
+4. generate files: `kf_info.txt`, `id.pcd` pointcloud.
 
 #### Optimization stage 1
 
 1. optimize stage 1 with gnss edges and lio edges: `./bin/main_opt --opt_stage=1`
-2. (optional) visualize trajectory of lio pose and optimized pose: `python3 trajectory.py  ./data/output/keyframes/kf_info_opt1.txt`
-3. (optional) merge all keyframe scan based on lio pose: `./bin/merge_kfs --info_file=kf_info_opt1.txt --pose_type=opt1`
+2. (optional) visualize trajectory of lio pose and optimized pose: `python3 ./script/trajectory.py  ./data/output/keyframes/kf_info.txt`
+3. (optional) merge all keyframe scan based on lio pose: `./bin/merge_kfs --info_file=kf_info.txt --pose_type=opt1`
 4. (optional) visualize keyframes scan: `pcl_viewer ./data/output/keyframes/pcd/map.pcd`
+5. (optional) visualize pose graph structure `g2o_viewer ./data/output/keyframes/pose_graph.g2o`
+6. update opt1 pose in `kf_info.txt`
+
+#### Loop closure
+
+1. detect loop closure: `./bin/main_loop `
+2. generate loop closure file: `loop.txt`
+
+#### Optimization stage 2
+
+1. optimize stage 1 with gnss edges and lio edges: `./bin/main_opt --opt_stage=2`
+2. (optional) visualize trajectory of lio pose and optimized pose: `python3 ./script/trajectory.py  ./data/output/keyframes/kf_info.txt`
+3. (optional) merge all keyframe scan based on lio pose: `./bin/merge_kfs --info_file=kf_info.txt --pose_type=opt2`
+4. (optional) visualize keyframes scan: `pcl_viewer ./data/output/keyframes/pcd/map.pcd`
+5. (optional) visualize pose graph structure `g2o_viewer ./data/output/keyframes/pose_graph.g2o`
+6. update opt2 pose in `kf_info.txt`

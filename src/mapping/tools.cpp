@@ -95,4 +95,52 @@ bool load_keyframes(const std::string &kf_path,
   return true;
 }
 
+bool load_loops(const std::string &loop_path,
+                std::vector<LoopClosure::Candidate> &loops) {
+  LOG(INFO) << "loading loop candidates.";
+  std::ifstream ifs(loop_path);
+  if (!ifs.is_open()) {
+    LOG(INFO) << "Unable to read loop file at " << loop_path;
+    return false;
+  }
+  auto read_pose = [](std::stringstream &ss) {
+    double data[7];
+    for (size_t i = 0; i < 7; ++i) {
+      ss >> data[i];
+    }
+    return Sophus::SE3d(Eigen::Quaterniond(data[3], data[0], data[1], data[2]),
+                        Eigen::Vector3d(data[4], data[5], data[6]));
+  };
+  std::string line;
+  std::getline(ifs, line);
+  int num_loop = std::stoi(line);
+  line.clear();
+
+  loops.clear();
+  loops.reserve(num_loop);
+
+  std::stringstream ss;
+
+  while (std::getline(ifs, line)) {
+    if (line.empty()) {
+      continue;
+    }
+
+    int idi = 0, idj = 0;
+    double score = 0.0;
+    ss << line;
+    ss >> idi >> idj >> score;
+    const Sophus::SE3d T_i_j = read_pose(ss);
+
+    LoopClosure::Candidate candidate(idi, idj, T_i_j);
+    candidate.ndt_score = score;
+    loops.emplace_back(candidate);
+
+    ss.clear();
+    line.clear();
+  }
+
+  return true;
+}
+
 } // namespace mapping

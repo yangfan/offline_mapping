@@ -1,6 +1,7 @@
 #pragma once
 
 #include "mapping/KeyFrame.h"
+#include "mapping/LoopClosure.h"
 
 #include <string>
 
@@ -18,6 +19,9 @@ bool save_keyframes(const std::string &kf_path,
 
 bool load_keyframes(const std::string &kf_path,
                     std::vector<std::unique_ptr<KeyFrame>> &kfs);
+
+bool load_loops(const std::string &loop_path,
+                std::vector<LoopClosure::Candidate> &loops);
 
 template <typename T>
 std::string print_info(const std::vector<T> &edges, double th) {

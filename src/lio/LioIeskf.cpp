@@ -37,7 +37,7 @@ bool LioIeskf::config(const std::string &yaml_file) {
   ndt_params.nb_type = NDT_INC::NeighborType::NB6;
   ndt_params.vx_size = 1.0;
   ndt_params.min_vx_pt = 5;
-  ndt_params.iterations = 5;
+  ndt_params.iterations = 20;
   ndt_params.chi2_th = 5.0;
   ndt_params.guess_translation = false;
   ndt_inc_.set_params(ndt_params);

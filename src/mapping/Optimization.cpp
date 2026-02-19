@@ -20,6 +20,7 @@ bool Optimization::config(const int stage) {
         yaml["gnss_height_noise_ratio"].as<double>() * params_.noise_gnss_pos;
     params_.edge_lio_num = yaml["lidar_continuous_num"].as<int>();
     params_.max_iterations = yaml["max_iterations"].as<int>();
+    params_.loop_outlier_th = yaml["loop_outlier_th"].as<double>();
     kf_path_ = yaml["kf_path"].as<std::string>();
 
     const std::vector<double> gnss_translate =
@@ -57,11 +58,15 @@ void Optimization::run() {
   LOG(INFO) << "lio error: " << mapping::print_info(edges_lio_, 0);
   LOG(INFO) << "gnss error: "
             << mapping::print_info(edges_gnss_, params_.gnss_outlier_th);
+  if (params_.opt_stage == 2) {
+    LOG(INFO) << "loop closure error: "
+              << mapping::print_info(edges_loop_, params_.loop_outlier_th);
+  }
 
   update_kfs();
 
-  mapping::save_keyframes(kf_path_ + "kf_info_opt1.txt", keyframes_);
-  save_pose_graph(kf_path_ + "g2o_opt1.g2o");
+  mapping::save_keyframes(kf_path_ + "kf_info.txt", keyframes_);
+  save_pose_graph(kf_path_ + "pose_graph.g2o");
   // load_pose_graph(kf_path_ + "g2o_opt1.g2o");
 }
 
@@ -124,7 +129,8 @@ void Optimization::build_pose_graph() {
   build_lio_edges();
   build_gnss_edges();
 
-  if (params_.opt_stage == 2) {
+  if (params_.opt_stage == 2 &&
+      mapping::load_loops(kf_path_ + "loop.txt", loop_candidates_)) {
     build_loop_edges();
   }
 }
@@ -166,7 +172,7 @@ void Optimization::build_lio_edges() {
       }
       auto vertex_j = vertices_[vj];
       auto edge = new EdgeRelSE3();
-      edge->setId(vertices_.size());
+      edge->setId(edges_lio_.size());
       edge->setVertex(0, vertex_i);
       edge->setVertex(1, vertex_j);
       edge->setMeasurement((vertex_i->estimate() * T_B_G_).inverse() *
@@ -207,7 +213,40 @@ void Optimization::build_gnss_edges() {
   }
 }
 
-void Optimization::build_loop_edges() { LOG(INFO) << "building loop edges."; }
+void Optimization::build_loop_edges() {
+  if (loop_candidates_.empty() || vertices_.empty()) {
+    LOG(WARNING) << "Empty loop candidate.";
+    return;
+  }
+  const double deg2rad = M_PI / 180.0;
+  Eigen::Matrix<double, 6, 6> info = Eigen::Matrix<double, 6, 6>::Zero();
+  const double var_pos_inv =
+      1.0 / (params_.noise_loop_pos * params_.noise_loop_pos);
+  const double var_rad_inv = 1.0 / (params_.noise_loop_deg * deg2rad *
+                                    params_.noise_loop_deg * deg2rad);
+  info.diagonal() << var_pos_inv, var_pos_inv, var_pos_inv, var_rad_inv,
+      var_rad_inv, var_rad_inv;
+
+  edges_loop_.clear();
+  edges_loop_.reserve(loop_candidates_.size());
+  size_t eid = edges_lio_.size() + edges_gnss_.size();
+  for (const auto &candidate : loop_candidates_) {
+    EdgeRelSE3 *edge = new EdgeRelSE3();
+    VertexSE3 *v0 = vertices_[candidate.idi];
+    VertexSE3 *v1 = vertices_[candidate.idj];
+    edge->setVertex(0, v0);
+    edge->setVertex(1, v1);
+    edge->setId(eid++);
+    // T_Gi_Gj = T_G_B * T_Bi_Bj * T_B_G
+    edge->setMeasurement(T_B_G_.inverse() * candidate.Tij * T_B_G_);
+    edge->setInformation(info);
+    auto rk = new g2o::RobustKernelCauchy();
+    rk->setDelta(params_.loop_outlier_th);
+    edge->setRobustKernel(rk);
+    edges_loop_.emplace_back(edge);
+    optimizer_.addEdge(edge);
+  }
+}
 
 // pose graph for g2o viewer only
 bool Optimization::save_pose_graph(const std::string &g2o_path) const {
@@ -224,6 +263,11 @@ bool Optimization::save_pose_graph(const std::string &g2o_path) const {
   }
   for (const auto &e : edges_lio_) {
     e->write(ofs);
+  }
+  for (const auto &e : edges_loop_) {
+    if (e->level() == 0) {
+      e->write(ofs);
+    }
   }
   // for (const auto &e : edges_gnss_) {
   //   e->write(ofs);
@@ -253,21 +297,31 @@ void Optimization::optimize() {
 
 void Optimization::remove_outliers() {
   size_t num_outliers = 0;
-  for (auto gnss_edge : edges_gnss_) {
-    if (gnss_edge->chi2() > gnss_edge->robustKernel()->delta()) {
-      gnss_edge->setLevel(1);
+  auto remove_outlier = [&num_outliers](g2o::OptimizableGraph::Edge *edge) {
+    if (edge->chi2() > edge->robustKernel()->delta()) {
+      edge->setLevel(1);
       num_outliers++;
     } else {
-      gnss_edge->setRobustKernel(nullptr);
+      edge->setRobustKernel(nullptr);
     }
-  }
+  };
+  std::for_each(edges_gnss_.begin(), edges_gnss_.end(), remove_outlier);
   LOG(INFO) << "Number of gnss outliers: " << num_outliers << " / "
             << edges_gnss_.size();
+
+  num_outliers = 0;
+  std::for_each(edges_loop_.begin(), edges_loop_.end(), remove_outlier);
+  LOG(INFO) << "Number of loop closure outliers: " << num_outliers << " / "
+            << edges_loop_.size();
 }
 
 void Optimization::update_kfs() {
   for (auto &kf : keyframes_) {
     // T_W_G * T_G_B = T_W_B
-    kf->pose_opt1 = vertices_[kf->id]->estimate() * T_B_G_.inverse();
+    if (params_.opt_stage == 1) {
+      kf->pose_opt1 = vertices_[kf->id]->estimate() * T_B_G_.inverse();
+    } else {
+      kf->pose_opt2 = vertices_[kf->id]->estimate() * T_B_G_.inverse();
+    }
   }
 }

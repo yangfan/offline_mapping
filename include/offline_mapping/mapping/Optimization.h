@@ -2,6 +2,7 @@
 
 #include "g2o_types/types.h"
 #include "mapping/KeyFrame.h"
+#include "mapping/LoopClosure.h"
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
@@ -19,11 +20,14 @@ class Optimization {
 public:
   struct Param {
     double gnss_outlier_th = 1.0;
+    double loop_outlier_th = 5.2;
     double noise_gnss_pos = 2.0;
     double noise_gnss_deg = 5.0;
     double noise_gnss_height = 20.0;
     double noise_lio_pos = 0.01;
     double noise_lio_deg = 0.1;
+    double noise_loop_pos = 0.1;
+    double noise_loop_deg = 0.5;
     int edge_lio_num = 5;
     int max_iterations = 100;
     int opt_stage = 1;
@@ -43,6 +47,7 @@ private:
 
   Sophus::SE3d T_B_G_;
   std::vector<std::unique_ptr<KeyFrame>> keyframes_;
+  std::vector<LoopClosure::Candidate> loop_candidates_;
 
   g2o::SparseOptimizer optimizer_;
   std::vector<VertexSE3 *> vertices_;

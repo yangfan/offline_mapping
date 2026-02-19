@@ -1,12 +1,12 @@
 YAML: 1.0
-bag_path: /home/fan/ssd/Projects/ros2_ws/data/bags/NCLT/ros2_0110
+bag_path: /home/fan/ssd/Projects/ros2_ws/data/bags/NCLT/ros2_0115
 lio_yaml: /home/fan/ssd/Projects/ros2_ws/src/offline_mapping/config/velodyne_nclt.yaml
 map_data: ./data/ch9/map_data/
 kf_path: /home/fan/ssd/Projects/ros2_ws/src/offline_mapping/data/output/keyframes/
 origin:
-  - 276726.56265798624
-  - 4685961.4821172003
-  - 272.80900000000003
+  - 276727.12782504963
+  - 4685961.6148576168
+  - 272.52100000000002
 common:
   dataset: nclt
   lid_topic: points_raw
@@ -18,5 +18,11 @@ gnss_outlier_th: 1.0
 gnss_pos_noise: 2.0
 gnss_height_noise_ratio: 10.0
 gnss_ang_noise: 5.0
+loop_outlier_th: 5.0
 lidar_continuous_num: 5
 max_iterations: 100
+loop_closure:
+  loop_dist: 30.0
+  loop_id_dist: 100
+  candidate_id_dist: 5
+  ndt_min_score: 4.5

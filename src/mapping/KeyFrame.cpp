@@ -5,6 +5,8 @@
 #include <pcl/io/pcd_io.h>
 
 void KeyFrame::save(std::ostream &os) const {
+  // lio pose: [3:10], gnss pos: [10:13]
+  // opt1 pose:[13:20], opt2 pose: [20:27]
   auto save_pose = [](std::ostream &os, const Sophus::SE3d &pose) {
     const Eigen::Quaterniond quat = pose.so3().unit_quaternion();
     const Eigen::Vector3d translation = pose.translation();
