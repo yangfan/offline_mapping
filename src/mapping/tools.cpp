@@ -8,6 +8,7 @@
 
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 namespace mapping {
 
@@ -24,6 +25,7 @@ void merge_keyframes(const std::string &kf_path, const std::string &info_path,
     kf->load_scan(kf_path + std::to_string(kf->id) + ".pcd");
     if (kf->scan->empty()) {
       LOG(WARNING) << "Empty scan in Keyframe " << kf->id;
+      continue;
     }
     PointCloudPtr scan_w(new PointCloudType);
     Sophus::SE3d pose;
@@ -141,6 +143,67 @@ bool load_loops(const std::string &loop_path,
   }
 
   return true;
+}
+
+void partition_map(const std::string &kf_path, const std::string &info_path,
+                   const double filter_sz, const double resolution) {
+
+  std::vector<std::unique_ptr<KeyFrame>> kfs;
+  load_keyframes(info_path, kfs);
+
+  pcl::VoxelGrid<PointType> voxel_filter;
+  voxel_filter.setLeafSize(filter_sz, filter_sz, filter_sz);
+
+  std::unordered_map<Eigen::Vector2i, PointCloudPtr, hash_pt2> submaps;
+
+  auto sub_id = [&resolution](const double x, const double y) {
+    return Eigen::Vector2i(int(std::floor((x - 50.0) / resolution)),
+                           int(std::floor((y - 50.0) / resolution)));
+  };
+
+  for (auto &kf : kfs) {
+    kf->load_scan(kf_path + "pcd/" + std::to_string(kf->id) + ".pcd");
+    if (kf->scan->empty()) {
+      LOG(WARNING) << "Empty scan in Keyframe " << kf->id;
+      continue;
+    }
+    PointCloudPtr scan_w(new PointCloudType);
+    pcl::transformPointCloud(*kf->scan, *scan_w, kf->pose_opt2.matrix());
+    voxel_filter.setInputCloud(scan_w);
+    PointCloudPtr scan(new PointCloudType);
+    voxel_filter.filter(*scan);
+
+    for (const auto &pt : scan_w->points) {
+      const Eigen::Vector2i sid = sub_id(pt.x, pt.y);
+      auto it = submaps.find(sid);
+      if (it == submaps.end()) {
+        PointCloudPtr submap(new PointCloudType);
+        submap->points.emplace_back(pt);
+        submap->is_dense = false;
+        submap->height = 1;
+        submaps.insert({sid, submap});
+      } else {
+        submaps[sid]->points.emplace_back(pt);
+      }
+    }
+  }
+
+  std::ofstream ofs(kf_path + "submaps/submaps_info.txt");
+  ofs << submaps.size() << std::endl;
+
+  for (const auto &[sid, submap] : submaps) {
+    ofs << sid.x() << " " << sid.y() << std::endl;
+
+    voxel_filter.setInputCloud(submap);
+    PointCloudPtr cloud(new PointCloudType);
+    voxel_filter.filter(*cloud);
+
+    cloud->height = 1;
+    cloud->width = cloud->size();
+    pcl::io::savePCDFile(kf_path + "submaps/" + std::to_string(sid.x()) + '_' +
+                             std::to_string(sid.y()) + ".pcd",
+                         *cloud, true);
+  }
 }
 
 } // namespace mapping

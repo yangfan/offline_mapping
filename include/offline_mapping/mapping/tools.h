@@ -23,6 +23,9 @@ bool load_keyframes(const std::string &kf_path,
 bool load_loops(const std::string &loop_path,
                 std::vector<LoopClosure::Candidate> &loops);
 
+void partition_map(const std::string &kf_path, const std::string &info_path,
+                   const double filter_sz, const double resolution);
+
 template <typename T>
 std::string print_info(const std::vector<T> &edges, double th) {
   std::vector<double> chi2;
@@ -49,5 +52,11 @@ std::string print_info(const std::vector<T> &edges, double th) {
   }
   return std::string();
 }
+
+struct hash_pt2 {
+  size_t operator()(const Eigen::Vector2i &pt) const {
+    return size_t((pt[0] * 73856093) ^ (pt[1] * 83492791) % 10000000);
+  }
+};
 
 } // namespace mapping
