@@ -32,6 +32,7 @@ public:
   bool add_pointcloud(pcl::PointCloud<pcl::PointXYZI>::ConstPtr pointcloud,
                       const Sophus::SE3d &body_pose);
   bool save_map(const std::string &file) const;
+  void spin() { visualizer_.spin(); }
 
 private:
   pcl::PointCloud<pcl::PointXYZI>::Ptr map_;
@@ -39,4 +40,6 @@ private:
   pcl::VoxelGrid<pcl::PointXYZI> voxel_filter_;
   float leaf_size_ = 1.0f;
   size_t max_pt_num_ = 600000;
+  bool initialized = false;
+  size_t kf_num_ = 0;
 };
