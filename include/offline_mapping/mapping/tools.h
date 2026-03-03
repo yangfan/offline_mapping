@@ -24,7 +24,8 @@ bool load_loops(const std::string &loop_path,
                 std::vector<LoopClosure::Candidate> &loops);
 
 void partition_map(const std::string &kf_path, const std::string &info_path,
-                   const double filter_sz, const double resolution);
+                   const double filter_sz, const double resolution,
+                   const Eigen::Vector2d &grid_origin);
 
 template <typename T>
 std::string print_info(const std::vector<T> &edges, double th) {

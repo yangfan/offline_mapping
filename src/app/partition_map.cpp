@@ -11,6 +11,7 @@ DEFINE_string(
     "Path to save map file");
 DEFINE_string(info_file, "kf_info.txt", "keyframe info file");
 DEFINE_double(resolution, 100.0, "submap size");
+DEFINE_double(grid_origin, 50.0, "submap size");
 
 int main(int argc, char **argv) {
 
@@ -30,7 +31,8 @@ int main(int argc, char **argv) {
   }
 
   mapping::partition_map(FLAGS_data_path, FLAGS_data_path + FLAGS_info_file,
-                         0.1, FLAGS_resolution);
+                         0.1, FLAGS_resolution,
+                         Eigen::Vector2d(FLAGS_grid_origin, FLAGS_grid_origin));
 
   return 0;
 }

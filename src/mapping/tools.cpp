@@ -146,7 +146,8 @@ bool load_loops(const std::string &loop_path,
 }
 
 void partition_map(const std::string &kf_path, const std::string &info_path,
-                   const double filter_sz, const double resolution) {
+                   const double filter_sz, const double resolution,
+                   const Eigen::Vector2d &grid_origin) {
 
   std::vector<std::unique_ptr<KeyFrame>> kfs;
   load_keyframes(info_path, kfs);
@@ -156,9 +157,9 @@ void partition_map(const std::string &kf_path, const std::string &info_path,
 
   std::unordered_map<Eigen::Vector2i, PointCloudPtr, hash_pt2> submaps;
 
-  auto sub_id = [&resolution](const double x, const double y) {
-    return Eigen::Vector2i(int(std::floor((x - 50.0) / resolution)),
-                           int(std::floor((y - 50.0) / resolution)));
+  auto sub_id = [&resolution, &grid_origin](const double x, const double y) {
+    return Eigen::Vector2i(int(std::floor((x - grid_origin.x()) / resolution)),
+                           int(std::floor((y - grid_origin.y()) / resolution)));
   };
 
   for (auto &kf : kfs) {
@@ -189,7 +190,8 @@ void partition_map(const std::string &kf_path, const std::string &info_path,
   }
 
   std::ofstream ofs(kf_path + "submaps/submaps_info.txt");
-  ofs << submaps.size() << std::endl;
+  ofs << submaps.size() << " " << resolution << " " << grid_origin.x() << " "
+      << grid_origin.y() << std::endl;
 
   for (const auto &[sid, submap] : submaps) {
     ofs << sid.x() << " " << sid.y() << std::endl;

@@ -31,13 +31,14 @@ Goal: find keyframes that are spatially close but created at different times
 1. Find Candidate
    1. go through all keyframe pairs
    2. skip keyframes that were temporally close
-   3. skip keyframes that are temporally close to previous detect loop keyframe pairs
+   3. skip keyframes that are close to previous detected loop keyframe pairs
    4. candidate detected if the distance is small enough
-   5. matching candidates: scan (query keyframe) to map (submap of target keyframe)
+2. evaluate candidates: scan (query keyframe) to map (submap of target keyframe)
    - build submap of keyframes temporally close to target keframe
    - get pointcloud of query keyframe from pcd file
    - match scan to submap with ascending resolutions
-   6. filter out candidates with lower score
+   - compute score of NDT alignment
+3. remove outliers with low score
 
 ### Optimization
 

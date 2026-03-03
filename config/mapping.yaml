@@ -1,7 +1,6 @@
 YAML: 1.0
 bag_path: /home/fan/ssd/Projects/ros2_ws/data/bags/NCLT/ros2_0115
 lio_yaml: /home/fan/ssd/Projects/ros2_ws/src/offline_mapping/config/velodyne_nclt.yaml
-map_data: ./data/ch9/map_data/
 kf_path: /home/fan/ssd/Projects/ros2_ws/src/offline_mapping/data/output/keyframes/
 origin:
   - 276727.12782504963
