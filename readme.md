@@ -6,6 +6,12 @@
 2. Loop Closure
 3. Optimization
 
+- result: local view
+
+   <img src="./doc/local_view.png" width="600" alt="local">
+
+   <img src="./doc/local_view.gif" width="600" alt="local view">
+
 ### Front End
 
 Goal: Use IESKF Lidar IMU Odometry to create Keyframes with timestamp lio pose, scan, gnss pose (not used in lio), etc.
